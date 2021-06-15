@@ -20,3 +20,13 @@ body.on("d-typeahead:load-suggestion", (event) => {
 		event.target.trigger("d-typeahead:show-suggestion", suggestions);
 	}
 });
+
+
+body.on("d-typeahead:selected-suggestion", (event) => {
+	console.log(event);
+	const value = event.detail;
+	
+	event.target.value = value;
+	
+	
+});

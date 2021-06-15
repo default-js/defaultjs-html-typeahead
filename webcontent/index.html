@@ -10,7 +10,26 @@
 		
 	</head>
 	<body>
-		<input type="text" is="d-typeahead">
+		
+		<div>
+			<h3>typeahead: simplemode</h3>
+			<input type="text" is="d-typeahead" name="simple">
+		</div>
+		
+		<div>
+			<h3>typeahead: self-handle-selection</h3>
+			<input type="text" is="d-typeahead" name="self-handle-selection" self-handle-selection>
+		</div>
+		
+		<div>
+			<h3>typeahead: request (string list)</h3>
+			<input type="text" is="d-typeahead" name="request" request="/data/response-strings.json" response-suggestions="${results}">
+		</div>
+		
+		<div>
+			<h3>typeahead: request (object list)</h3>
+			<input type="text" is="d-typeahead" name="request" request="/data/response-objects.json" response-suggestions="${results}" suggestion-text="${title}-${id}" suggestion-value="${value}-${id}">
+		</div>
 
 		<script type="module" src="/browser-bundle.js"></script>
 		<script type="module" src="/main.js"></script>
