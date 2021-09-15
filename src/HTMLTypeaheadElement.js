@@ -13,17 +13,17 @@ const PRIVATE_READY = "ready";
 const PRIVATE_SUGGESTION_BOX = "suggestionBox";
 const PRIVATE_REQUEST = "request";
 
-
 const DEFAULT_TEMPLATE = Template.load(
 	`<jstl jstl-foreach="\${suggestions}" jstl-foreach-var="suggestion">
 	<option value="\${suggestion.value}">\${suggestion.text}</option>
-</jstl>`, false);
+</jstl>`,
+	false
+);
 
 const EVENT_LOAD_SUGGESTION = componentEventname("load-suggestion", NODENAME);
 const EVENT_SHOW_SUGGESTION = componentEventname("show-suggestion", NODENAME);
 const EVENT_SELECTED_SUGGESTION = componentEventname("selected-suggestion", NODENAME);
 const TIMEOUT_INTERVAL = 100;
-
 
 const ATTRIBUTE_SELF_HANDLE_SELECTION = "self-handle-selection";
 const ATTRIBUTE_REQUEST = "request";
@@ -32,43 +32,31 @@ const ATTRIBUTE_SUGGESTION_VALUE = "suggestion-value";
 const ATTRIBUTE_SUGGESTION_TEXT = "suggestion-text";
 const ATTRIBUTES = [];
 
-
-
 const initSuggestionBox = (input) => {
 	const id = createUID("id-", "");
 	const box = create(`<datalist id="${id}"></datalist>`).first();
 
-	box.on("click", console.log);
-
 	input.after(box);
-	input.attr("list", id)
+	input.attr("list", id);
 
-	return box;
+	privateProperty(input, PRIVATE_SUGGESTION_BOX, box);
 };
 
 const getSuggestionBox = (input) => {
-	let suggestionBox = privateProperty(input, PRIVATE_SUGGESTION_BOX);
-	if (!suggestionBox) {
-
-		suggestionBox = initSuggestionBox(input);
-		privateProperty(input, PRIVATE_SUGGESTION_BOX, suggestionBox);
-	}
-
-	return suggestionBox;
+	return privateProperty(input, PRIVATE_SUGGESTION_BOX);
 };
 
 const initInputHandle = (input) => {
 	let inputTimeout = null;
 	input.on("input focus", (event) => {
-		if (inputTimeout)
-			clearTimeout(inputTimeout);
+		if (inputTimeout) clearTimeout(inputTimeout);
 
 		if (event.inputType == "insertReplacementText") {
 			if (input.selfHandleSelection) {
 				event.preventDefault();
 				event.stopPropagation();
 
-				input.trigger(EVENT_SELECTED_SUGGESTION, event.data)
+				input.trigger(EVENT_SELECTED_SUGGESTION, event.data);
 			}
 
 			return;
@@ -76,8 +64,7 @@ const initInputHandle = (input) => {
 
 		const value = input.value;
 		inputTimeout = setTimeout(async () => {
-			if (value == input.value)
-				input.trigger(EVENT_LOAD_SUGGESTION, value);
+			if (value == input.value) input.trigger(EVENT_LOAD_SUGGESTION, value);
 		}, TIMEOUT_INTERVAL);
 	});
 };
@@ -85,8 +72,7 @@ const initInputHandle = (input) => {
 const initHandleSuggestions = (input) => {
 	let showTimeout = null;
 	input.on(EVENT_SHOW_SUGGESTION, (event) => {
-		if (showTimeout)
-			clearTimeout(showTimeout);
+		if (showTimeout) clearTimeout(showTimeout);
 
 		const data = event.detail;
 		showTimeout = setTimeout(async () => {
@@ -95,12 +81,10 @@ const initHandleSuggestions = (input) => {
 	});
 };
 
-
 const getRequestElement = (selector) => {
 	try {
 		let request = find(selector).first();
-		if (request instanceof HTMLRequestElement)
-			return request;
+		if (request instanceof HTMLRequestElement) return request;
 	} catch (e) {
 		//ignore
 	}
@@ -123,8 +107,7 @@ const executeRequest = async (input, value) => {
 	let request = getRequest(input);
 	const context = { value, input };
 
-	if (request instanceof HTMLRequestElement)
-		return request.execute(context);
+	if (request instanceof HTMLRequestElement) return request.execute(context);
 	else if (typeof request === "string") {
 		request = await ExpressionResolver.resolveText(request, context);
 		const url = new URL(request, location);
@@ -134,31 +117,27 @@ const executeRequest = async (input, value) => {
 };
 
 const handleResponse = async (input, response) => {
-
-	if (input.hasAttribute(ATTRIBUTE_RESPONSE_SUGGESTIONS))
-		response = await ExpressionResolver.resolve(input.attr(ATTRIBUTE_RESPONSE_SUGGESTIONS), response, []);
+	if (input.hasAttribute(ATTRIBUTE_RESPONSE_SUGGESTIONS)) response = await ExpressionResolver.resolve(input.attr(ATTRIBUTE_RESPONSE_SUGGESTIONS), response, []);
 
 	const textSelector = input.attr(ATTRIBUTE_SUGGESTION_TEXT) || "text";
 	const valueSelector = input.attr(ATTRIBUTE_SUGGESTION_VALUE) || "value";
 
 	const result = [];
 	for (let item of response) {
-
 		const type = typeof item;
 		let text = null;
 		let value = null;
 
-		if (type === "string" || type === "number")
-			value = text = item;
+		if (type === "string" || type === "number") value = text = item;
 		else {
 			text = await ExpressionResolver.resolveText(textSelector, item, null);
 			value = await ExpressionResolver.resolveText(valueSelector, item, null);
 		}
-		
+
 		result.push({
 			text: text ? text : value,
-			value: value ? value : text
-		})
+			value: value ? value : text,
+		});
 	}
 
 	input.trigger(EVENT_SHOW_SUGGESTION, result);
@@ -189,9 +168,10 @@ class HTMLTypeaheadElement extends HTMLInputElement {
 	constructor() {
 		super();
 		privateProperty(this, PRIVATE_READY, lazyPromise());
+		initSuggestionBox(this);
 		initInputHandle(this);
 		initHandleSuggestions(this);
-
+		
 	}
 
 	get selfHandleSelection() {
@@ -199,10 +179,8 @@ class HTMLTypeaheadElement extends HTMLInputElement {
 	}
 
 	set selfHandleSelection(value) {
-		if (value)
-			this.attr(ATTRIBUTE_SELF_HANDLE_SELECTION, "");
-		else
-			this.attr(ATTRIBUTE_SELF_HANDLE_SELECTION, null);
+		if (value) this.attr(ATTRIBUTE_SELF_HANDLE_SELECTION, "");
+		else this.attr(ATTRIBUTE_SELF_HANDLE_SELECTION, null);
 	}
 
 	get ready() {
@@ -216,15 +194,14 @@ class HTMLTypeaheadElement extends HTMLInputElement {
 	}
 
 	async suggestions(suggestions) {
-		await this.ready;		
+		await this.ready;
 		const suggestionBox = getSuggestionBox(this);
 		if (suggestions) {
 			await Renderer.render({
 				container: suggestionBox,
 				template: await DEFAULT_TEMPLATE,
-				data: { suggestions }
-
-			})
+				data: { suggestions },
+			});
 		}
 	}
 
@@ -237,10 +214,11 @@ class HTMLTypeaheadElement extends HTMLInputElement {
 	}
 
 	connectedCallback() {
-		if (this.ownerDocument == document) (async () => {
-			await this.init(this);
-			this.ready.resolve();
-		})();
+		if (this.ownerDocument == document)
+			(async () => {
+				await this.init(this);
+				this.ready.resolve();
+			})();
 	}
 
 	adoptedCallback() {
@@ -257,8 +235,8 @@ class HTMLTypeaheadElement extends HTMLInputElement {
 	disconnectedCallback() {
 		this.destroy();
 	}
-};
+}
 
-define(HTMLTypeaheadElement, { extends: "input" })
+define(HTMLTypeaheadElement, { extends: "input" });
 
 export default HTMLTypeaheadElement;
