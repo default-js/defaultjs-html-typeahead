@@ -1,4 +1,4 @@
-import { createUID } from "@default-js/defaultjs-html-components/src/Component";
+import { createUID, componentBaseOf } from "@default-js/defaultjs-html-components/src/Component";
 import { toNodeName, define } from "@default-js/defaultjs-html-components/src/utils/DefineComponentHelper";
 import { componentEventname } from "@default-js/defaultjs-html-components/src/utils/EventHelper";
 import { privateProperty } from "@default-js/defaultjs-common-utils/src/PrivateProperty";
@@ -9,7 +9,6 @@ import { lazyPromise } from "@default-js/defaultjs-common-utils/src/PromiseUtils
 import HTMLRequestElement from "@default-js/defaultjs-html-request/src/HTMLRequestElement";
 
 const NODENAME = toNodeName("typeahead");
-const PRIVATE_READY = "ready";
 const PRIVATE_SUGGESTION_BOX = "suggestionBox";
 const PRIVATE_REQUEST = "request";
 
@@ -17,7 +16,7 @@ const DEFAULT_TEMPLATE = Template.load(
 	`<jstl jstl-foreach="\${suggestions}" jstl-foreach-var="suggestion">
 	<option value="\${suggestion.value}">\${suggestion.text}</option>
 </jstl>`,
-	false
+	false,
 );
 
 const EVENT_LOAD_SUGGESTION = componentEventname("load-suggestion", NODENAME);
@@ -26,6 +25,7 @@ const EVENT_SELECTED_SUGGESTION = componentEventname("selected-suggestion", NODE
 const TIMEOUT_INTERVAL = 100;
 
 const ATTRIBUTE_SELF_HANDLE_SELECTION = "self-handle-selection";
+const ATTRIBUTE_MIN_INPUT_SIZE = "min-input-size";
 const ATTRIBUTE_REQUEST = "request";
 const ATTRIBUTE_RESPONSE_SUGGESTIONS = "response-suggestions";
 const ATTRIBUTE_SUGGESTION_VALUE = "suggestion-value";
@@ -55,17 +55,16 @@ const initInputHandle = (input) => {
 			if (input.selfHandleSelection) {
 				event.preventDefault();
 				event.stopPropagation();
-
-				input.trigger(EVENT_SELECTED_SUGGESTION, event.data);
 			}
-
+			input.trigger(EVENT_SELECTED_SUGGESTION, event.data);
 			return;
 		}
-
-		const value = input.value;
-		inputTimeout = setTimeout(async () => {
-			if (value == input.value) input.trigger(EVENT_LOAD_SUGGESTION, value);
-		}, TIMEOUT_INTERVAL);
+		const value = input.value || "";
+		if (value.length >= input.minInputSize) {
+			inputTimeout = setTimeout(async () => {
+				if (value == input.value) input.trigger(EVENT_LOAD_SUGGESTION, value);
+			}, TIMEOUT_INTERVAL);
+		}
 	});
 };
 
@@ -156,7 +155,7 @@ const initHandleRequest = (input) => {
 	});
 };
 
-class HTMLTypeaheadElement extends HTMLInputElement {
+class HTMLTypeaheadElement extends componentBaseOf(HTMLInputElement) {
 	static get observedAttributes() {
 		return ATTRIBUTES;
 	}
@@ -167,11 +166,9 @@ class HTMLTypeaheadElement extends HTMLInputElement {
 
 	constructor() {
 		super();
-		privateProperty(this, PRIVATE_READY, lazyPromise());
 		initSuggestionBox(this);
 		initInputHandle(this);
 		initHandleSuggestions(this);
-		
 	}
 
 	get selfHandleSelection() {
@@ -183,11 +180,9 @@ class HTMLTypeaheadElement extends HTMLInputElement {
 		else this.attr(ATTRIBUTE_SELF_HANDLE_SELECTION, null);
 	}
 
-	get ready() {
-		return privateProperty(this, PRIVATE_READY);
-	}
-
 	async init() {
+		this.minInputSize = parseInt(this.attr(ATTRIBUTE_MIN_INPUT_SIZE) || "0");
+
 		if (this.hasAttribute(ATTRIBUTE_REQUEST)) {
 			initHandleRequest(this);
 		}
@@ -207,33 +202,9 @@ class HTMLTypeaheadElement extends HTMLInputElement {
 
 	async destroy() {
 		if (this.ready.resolved) {
-			privateProperty(this, PRIVATE_READY, lazyPromise());
 			privateProperty(this, PRIVATE_SUGGESTION_BOX, null);
 			privateProperty(this, PRIVATE_REQUEST, null);
 		}
-	}
-
-	connectedCallback() {
-		if (this.ownerDocument == document)
-			(async () => {
-				await this.init(this);
-				this.ready.resolve();
-			})();
-	}
-
-	adoptedCallback() {
-		this.connectedCallback();
-	}
-
-	attributeChangedCallback(name, oldValue, newValue) {
-		if (oldValue != newValue && this.isConnected) {
-			this.trigger(triggerTimeout, attributeChangeEventname(name, this));
-			this.trigger(triggerTimeout, componentEventname("change", this));
-		}
-	}
-
-	disconnectedCallback() {
-		this.destroy();
 	}
 }
 

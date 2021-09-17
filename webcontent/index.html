@@ -13,12 +13,12 @@
 		
 		<div>
 			<h3>typeahead: simplemode</h3>
-			<input type="text" is="d-typeahead" name="simple">
+			<input type="text" is="d-typeahead" name="simple" autocomplete="off" min-input-size="3">
 		</div>
 		
 		<div>
 			<h3>typeahead: self-handle-selection</h3>
-			<input type="text" is="d-typeahead" name="self-handle-selection" self-handle-selection>
+			<input type="text" is="d-typeahead" name="self-handle-selection" autocomplete="off" self-handle-selection>
 		</div>
 		
 		<div>
@@ -31,7 +31,7 @@
 			<input type="text" is="d-typeahead" name="request" request="/data/response-objects.json" response-suggestions="${results}" suggestion-text="${title}-${id}" suggestion-value="${value}-${id}">
 		</div>
 
-		<script type="module" src="/browser-bundle.js"></script>
+		<script type="module" src="/browser-bundle-defaultjs-html-typeahead.js"></script>
 		<script type="module" src="/main.js"></script>
 	</body>
 </html>

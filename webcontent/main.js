@@ -17,7 +17,7 @@ body.on("d-typeahead:load-suggestion", (event) => {
 			});
 		}
 
-		event.target.trigger("d-typeahead:show-suggestion", suggestions);
+		event.target.suggestions(suggestions);
 	}
 });
 
