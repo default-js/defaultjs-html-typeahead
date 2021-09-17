@@ -1,7 +1,7 @@
 {
 	"name": "@default-js/defaultjs-html-typeahead",
 	"buildname": "defaultjs-html-typeahead",
-	"version": "1.4.3",
+	"version": "1.4.4",
 	"description": "Html web component for typeahead functionality!",
 	"main": "./index.js",
 	"scripts": {
@@ -54,6 +54,7 @@
 	},
 	"files": [
 		"index.js",
+		"browser.js",
 		"*-bundle.js",
 		"src/**",
 		"LICENSE",
