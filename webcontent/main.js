@@ -13,7 +13,11 @@ body.on("d-typeahead:load-suggestion", (event) => {
 		for (let i = 0; i < 10; i++) {
 			suggestions.push({
 				value: `${value}-${i}`,
-				text: `${value}-${i}`
+				text: `${value}-${i}`,
+				data: {
+					value: `${value}-${i}`,
+					text: `${value}-${i}`
+				}
 			});
 		}
 
@@ -24,9 +28,9 @@ body.on("d-typeahead:load-suggestion", (event) => {
 
 body.on("d-typeahead:selected-suggestion", (event) => {
 	console.log(event);
-	const value = event.detail;
-	
-	event.target.value = value;
-	
-	
+	if(event.target.hasAttribute("self-handle-selection")){
+		const value = event.detail;
+		
+		event.target.value = value.value || value;
+	}	
 });

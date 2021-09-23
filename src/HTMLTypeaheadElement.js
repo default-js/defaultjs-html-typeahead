@@ -1,16 +1,16 @@
 import { createUID, componentBaseOf } from "@default-js/defaultjs-html-components/src/Component";
 import { toNodeName, define } from "@default-js/defaultjs-html-components/src/utils/DefineComponentHelper";
 import { componentEventname } from "@default-js/defaultjs-html-components/src/utils/EventHelper";
-import { privateProperty } from "@default-js/defaultjs-common-utils/src/PrivateProperty";
+import { privatePropertyAccessor } from "@default-js/defaultjs-common-utils/src/PrivateProperty";
 import Renderer from "@default-js/defaultjs-template-language/src/Renderer";
 import Template from "@default-js/defaultjs-template-language/src/Template";
 import ExpressionResolver from "@default-js/defaultjs-expression-language/src/ExpressionResolver";
-import { lazyPromise } from "@default-js/defaultjs-common-utils/src/PromiseUtils";
 import HTMLRequestElement from "@default-js/defaultjs-html-request/src/HTMLRequestElement";
 
 const NODENAME = toNodeName("typeahead");
-const PRIVATE_SUGGESTION_BOX = "suggestionBox";
-const PRIVATE_REQUEST = "request";
+const _suggestionBox = privatePropertyAccessor("suggestionBox");
+const _request = privatePropertyAccessor("request");
+const _suggestionMap = privatePropertyAccessor("suugestionMap");
 
 const DEFAULT_TEMPLATE = Template.load(
 	`<jstl jstl-foreach="\${suggestions}" jstl-foreach-var="suggestion">
@@ -32,6 +32,24 @@ const ATTRIBUTE_SUGGESTION_VALUE = "suggestion-value";
 const ATTRIBUTE_SUGGESTION_TEXT = "suggestion-text";
 const ATTRIBUTES = [];
 
+const toSuggestionMap = (input, suggestions) => {
+	const map = new Map();
+	if(suggestions){
+		for(let suggestion of suggestions)
+			map.set(suggestion.value, suggestion);
+	}
+	_suggestionMap(input, map);
+};
+
+const getSuggestionData = (input, value) => {
+	const map = _suggestionMap(input);
+	const suggestion = map.get(value)
+	if(!suggestion)
+		return null;
+
+	return suggestion.data || value;
+};
+
 const initSuggestionBox = (input) => {
 	const id = createUID("id-", "");
 	const box = create(`<datalist id="${id}"></datalist>`).first();
@@ -39,11 +57,7 @@ const initSuggestionBox = (input) => {
 	input.after(box);
 	input.attr("list", id);
 
-	privateProperty(input, PRIVATE_SUGGESTION_BOX, box);
-};
-
-const getSuggestionBox = (input) => {
-	return privateProperty(input, PRIVATE_SUGGESTION_BOX);
+	_suggestionBox(input, box);
 };
 
 const initInputHandle = (input) => {
@@ -51,12 +65,13 @@ const initInputHandle = (input) => {
 	input.on("input focus", (event) => {
 		if (inputTimeout) clearTimeout(inputTimeout);
 
-		if (event.inputType == "insertReplacementText") {
+		if (event.type == "input" && (!event.inputType || event.inputType == "insertReplacementText")) {			
 			if (input.selfHandleSelection) {
 				event.preventDefault();
 				event.stopPropagation();
 			}
-			input.trigger(EVENT_SELECTED_SUGGESTION, event.data);
+			input.trigger(EVENT_SELECTED_SUGGESTION, getSuggestionData(input, input.value));
+			
 			return;
 		}
 		const value = input.value || "";
@@ -92,11 +107,11 @@ const getRequestElement = (selector) => {
 };
 
 const getRequest = (input) => {
-	let request = privateProperty(input, PRIVATE_REQUEST);
+	let request = _request(input);
 	if (!request) {
 		const value = input.attr(ATTRIBUTE_REQUEST);
 		request = getRequestElement(value) || value;
-		privateProperty(input, PRIVATE_REQUEST, request);
+		_request(input, request);
 	}
 
 	return request;
@@ -190,7 +205,8 @@ class HTMLTypeaheadElement extends componentBaseOf(HTMLInputElement) {
 
 	async suggestions(suggestions) {
 		await this.ready;
-		const suggestionBox = getSuggestionBox(this);
+		toSuggestionMap(this, suggestions);
+		const suggestionBox = _suggestionBox(this);
 		if (suggestions) {
 			await Renderer.render({
 				container: suggestionBox,
@@ -202,8 +218,8 @@ class HTMLTypeaheadElement extends componentBaseOf(HTMLInputElement) {
 
 	async destroy() {
 		if (this.ready.resolved) {
-			privateProperty(this, PRIVATE_SUGGESTION_BOX, null);
-			privateProperty(this, PRIVATE_REQUEST, null);
+			_suggestionBox(this, null);
+			_request(this, null);
 		}
 	}
 }
