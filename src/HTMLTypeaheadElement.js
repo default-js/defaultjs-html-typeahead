@@ -222,7 +222,7 @@ class HTMLTypeaheadElement extends componentBaseOf(HTMLInputElement) {
 			_request(this, null);
 		}
 	}
-}
+};
 
 define(HTMLTypeaheadElement, { extends: "input" });
 

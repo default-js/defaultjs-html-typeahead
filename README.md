@@ -87,7 +87,8 @@ input.on("d-typeahead:load-suggestion", (event) => {
 
 input.on("d-typeahead:selected-suggestion", (event) => {
   event.stopPropagation();
-  const data = event.details;
+  
+  const data = event.details; // suggestion property chain: data, value, text
   //by self-handle-selection, the value of input field must set manually!
   input.value = data.name;
 
@@ -97,10 +98,22 @@ input.on("d-typeahead:selected-suggestion", (event) => {
 
 ## Dom Events
 
-### d-typeahead:load-suggestion
+### `d-typeahead:load-suggestion`
 
-### d-typeahead:show-suggestion
+This event is triggered, if the value from field changed. This event must be catched to provide suggestions, by trigger the event `d-typeahead:show-suggestion` with an array of suggestion objects.
 
-### d-typeahead:selected-suggestion
+### `d-typeahead:show-suggestion`
+
+This event must be triggered with an array of suugestion objects on input field to show the suggestions.
+
+### `d-typeahead:selected-suggestion`
+
+This event would be triggered, if the user select an suggestion.
 
 ## Javascript API
+
+The `defaultjs-html-typeahead` provide on web component that extends the inputfield.
+
+```javascript
+class HTMLTypeaheadElement extends componentBaseOf(HTMLInputElement)
+```
