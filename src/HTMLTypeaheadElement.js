@@ -34,18 +34,16 @@ const ATTRIBUTES = [];
 
 const toSuggestionMap = (input, suggestions) => {
 	const map = new Map();
-	if(suggestions){
-		for(let suggestion of suggestions)
-			map.set(suggestion.value, suggestion);
+	if (suggestions) {
+		for (let suggestion of suggestions) map.set(suggestion.value, suggestion);
 	}
 	_suggestionMap(input, map);
 };
 
 const getSuggestionData = (input, value) => {
 	const map = _suggestionMap(input);
-	const suggestion = map.get(value)
-	if(!suggestion)
-		return null;
+	const suggestion = map.get(value);
+	if (!suggestion) return null;
 
 	return suggestion.data || value;
 };
@@ -65,13 +63,13 @@ const initInputHandle = (input) => {
 	input.on("input focus", (event) => {
 		if (inputTimeout) clearTimeout(inputTimeout);
 
-		if (event.type == "input" && (!event.inputType || event.inputType == "insertReplacementText")) {			
+		if (event.type == "input" && (!event.inputType || event.inputType == "insertReplacementText")) {
 			if (input.selfHandleSelection) {
 				event.preventDefault();
 				event.stopPropagation();
 			}
 			input.trigger(EVENT_SELECTED_SUGGESTION, getSuggestionData(input, input.value));
-			
+
 			return;
 		}
 		const value = input.value || "";
@@ -179,11 +177,10 @@ class HTMLTypeaheadElement extends componentBaseOf(HTMLInputElement) {
 		return NODENAME;
 	}
 
+	#initialized = false;
+
 	constructor() {
 		super();
-		initSuggestionBox(this);
-		initInputHandle(this);
-		initHandleSuggestions(this);
 	}
 
 	get selfHandleSelection() {
@@ -196,10 +193,17 @@ class HTMLTypeaheadElement extends componentBaseOf(HTMLInputElement) {
 	}
 
 	async init() {
-		this.minInputSize = parseInt(this.attr(ATTRIBUTE_MIN_INPUT_SIZE) || "0");
+		await super.init();
 
-		if (this.hasAttribute(ATTRIBUTE_REQUEST)) {
-			initHandleRequest(this);
+		if (!this.#initialized) {
+			initSuggestionBox(this);
+			initInputHandle(this);
+			initHandleSuggestions(this);
+			this.minInputSize = parseInt(this.attr(ATTRIBUTE_MIN_INPUT_SIZE) || "0");
+
+			if (this.hasAttribute(ATTRIBUTE_REQUEST)) initHandleRequest(this);
+
+			this.#initialized = true;
 		}
 	}
 
@@ -222,7 +226,7 @@ class HTMLTypeaheadElement extends componentBaseOf(HTMLInputElement) {
 			_request(this, null);
 		}
 	}
-};
+}
 
 define(HTMLTypeaheadElement, { extends: "input" });
 
