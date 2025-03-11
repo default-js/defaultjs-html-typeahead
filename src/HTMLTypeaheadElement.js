@@ -1,4 +1,4 @@
-import { createUID, componentBaseOf } from "@default-js/defaultjs-html-components/src/Component";
+import { createUUID, componentBaseOf } from "@default-js/defaultjs-html-components/src/Component";
 import { toNodeName, define } from "@default-js/defaultjs-html-components/src/utils/DefineComponentHelper";
 import { componentEventname } from "@default-js/defaultjs-html-components/src/utils/EventHelper";
 import { privatePropertyAccessor } from "@default-js/defaultjs-common-utils/src/PrivateProperty";
@@ -49,7 +49,7 @@ const getSuggestionData = (input, value) => {
 };
 
 const initSuggestionBox = (input) => {
-	const id = createUID("id-", "");
+	const id = createUUID("id-", "");
 	const box = create(`<datalist id="${id}"></datalist>`).first();
 
 	input.after(box);
